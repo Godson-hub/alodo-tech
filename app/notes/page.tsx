@@ -27,6 +27,7 @@ function NotesContent() {
   const [appreciation, setAppreciation] = useState("");
   const [notes, setNotes] = useState<Note[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [chargement, setChargement] = useState(true);
 
   async function chargerEleve() {
     if (!eleveId) return;
@@ -40,6 +41,7 @@ function NotesContent() {
 
   async function chargerNotes() {
     if (!eleveId) return;
+    setChargement(true);
     const { data, error } = await supabase
       .from("notes")
       .select("*")
@@ -48,10 +50,12 @@ function NotesContent() {
 
     if (error) {
       setErreur(error.message);
+      setChargement(false);
       return;
     }
 
     setNotes(data || []);
+    setChargement(false);
   }
 
   useEffect(() => {
@@ -64,7 +68,9 @@ function NotesContent() {
     setErreur(null);
 
     if (!eleveId || !professeurId) {
-      setErreur("Élève ou professeur manquant. Reviens depuis la page Mes classes.");
+      setErreur(
+        "Élève ou professeur manquant. Reviens depuis la page Mes classes."
+      );
       return;
     }
 
@@ -75,7 +81,6 @@ function NotesContent() {
 
     const valeurNum = Number(valeur);
 
-    // Cas limite : empêcher une note en dehors de 0-20
     if (isNaN(valeurNum) || valeurNum < 0 || valeurNum > 20) {
       setErreur("La note doit être un nombre entre 0 et 20.");
       return;
@@ -100,10 +105,10 @@ function NotesContent() {
 
   if (!eleveId || !professeurId) {
     return (
-      <div style={{ padding: "2rem" }}>
-        <p style={{ color: "red" }}>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <p className="text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
           Aucun élève sélectionné. Reviens depuis la page{" "}
-          <a href="/mes-classes" style={{ color: "blue" }}>
+          <a href="/mes-classes" className="underline font-medium">
             Mes classes
           </a>
           .
@@ -113,49 +118,87 @@ function NotesContent() {
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "500px" }}>
-      <h1>Ajouter une note</h1>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-blue-900 mb-2">
+        Ajouter une note
+      </h1>
       {eleve && (
-        <p>
-          Élève : <strong>{eleve.prenom} {eleve.nom}</strong>
+        <p className="text-gray-600 mb-6">
+          Élève :{" "}
+          <span className="font-semibold text-gray-900">
+            {eleve.prenom} {eleve.nom}
+          </span>
         </p>
       )}
 
-      <form onSubmit={gererEnvoi} style={{ marginBottom: "2rem" }}>
-        <div style={{ marginBottom: "1rem" }}>
-          <label>Note (sur 20)</label>
-          <br />
+      <form
+        onSubmit={gererEnvoi}
+        className="bg-white rounded-xl shadow p-6 mb-8 space-y-4"
+      >
+        <div>
+          <label className="block text-base font-medium text-gray-700 mb-1">
+            Note (sur 20)
+          </label>
           <input
             type="number"
             value={valeur}
             onChange={(e) => setValeur(e.target.value)}
-            style={{ padding: "0.5rem", width: "100%" }}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>Appréciation</label>
-          <br />
+        <div>
+          <label className="block text-base font-medium text-gray-700 mb-1">
+            Appréciation
+          </label>
           <textarea
             value={appreciation}
             onChange={(e) => setAppreciation(e.target.value)}
-            style={{ padding: "0.5rem", width: "100%" }}
+            rows={3}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {erreur && <p style={{ color: "red" }}>{erreur}</p>}
+        {erreur && (
+          <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {erreur}
+          </p>
+        )}
 
-        <button type="submit" style={{ padding: "0.5rem 1rem" }}>
+        <button
+          type="submit"
+          className="bg-blue-900 hover:bg-blue-800 text-white font-medium px-5 py-2 rounded-lg transition"
+        >
           Ajouter la note
         </button>
       </form>
 
-      <h2>Notes de cet élève</h2>
-      {notes.length === 0 && <p>Aucune note pour le moment.</p>}
-      <ul>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3">
+        Notes de cet élève
+      </h2>
+
+      {chargement && <p className="text-gray-500">Chargement...</p>}
+
+      {!chargement && notes.length === 0 && (
+        <p className="text-gray-500">Aucune note pour le moment.</p>
+      )}
+
+      <ul className="space-y-2">
         {notes.map((note) => (
-          <li key={note.id} style={{ marginBottom: "0.5rem" }}>
-            <strong>{note.valeur}/20</strong> — {note.appreciation}
+          <li
+            key={note.id}
+            className="bg-white rounded-lg shadow-sm px-4 py-3"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className={`font-bold text-lg ${
+                  note.valeur >= 10 ? "text-green-700" : "text-red-600"
+                }`}
+              >
+                {note.valeur}/20
+              </span>
+            </div>
+            <p className="text-gray-600 text-sm">{note.appreciation}</p>
           </li>
         ))}
       </ul>
@@ -165,7 +208,13 @@ function NotesContent() {
 
 export default function NotesPage() {
   return (
-    <Suspense fallback={<p style={{ padding: "2rem" }}>Chargement...</p>}>
+    <Suspense
+      fallback={
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <p className="text-gray-500">Chargement...</p>
+        </div>
+      }
+    >
       <NotesContent />
     </Suspense>
   );
