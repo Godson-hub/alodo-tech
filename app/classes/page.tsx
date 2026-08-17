@@ -1,116 +1,214 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type Classe = {
-  id: number;
+interface Classe {
+  id: string;
   nom: string;
-};
+  niveau: string;
+}
 
 export default function ClassesPage() {
-  const [nom, setNom] = useState("");
   const [classes, setClasses] = useState<Classe[]>([]);
-  const [erreur, setErreur] = useState<string | null>(null);
-  const [chargement, setChargement] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  async function chargerClasses() {
-    setChargement(true);
+  // formulaire de création
+  const [nom, setNom] = useState("");
+  const [niveau, setNiveau] = useState("");
+
+  // édition en cours
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editNom, setEditNom] = useState("");
+  const [editNiveau, setEditNiveau] = useState("");
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  async function fetchClasses() {
+    setLoading(true);
     const { data, error } = await supabase
       .from("classes")
       .select("*")
-      .order("id", { ascending: true });
+      .order("nom", { ascending: true });
 
-    if (error) {
-      setErreur(error.message);
-      setChargement(false);
-      return;
-    }
-
-    setClasses(data || []);
-    setChargement(false);
+    if (error) setError(error.message);
+    else setClasses(data ?? []);
+    setLoading(false);
   }
 
-  useEffect(() => {
-    chargerClasses();
-  }, []);
-
-  async function gererEnvoi(e: React.FormEvent) {
+  async function ajouterClasse(e: React.FormEvent) {
     e.preventDefault();
-    setErreur(null);
-
-    if (!nom.trim()) {
-      setErreur("Merci de renseigner un nom de classe.");
+    if (!nom.trim() || !niveau.trim()) {
+      setError("Le nom et le niveau sont obligatoires");
       return;
     }
 
-    const { error } = await supabase.from("classes").insert({ nom });
+    const { error } = await supabase.from("classes").insert({ nom, niveau });
 
     if (error) {
-      setErreur(error.message);
+      setError(error.message);
       return;
     }
 
     setNom("");
-    chargerClasses();
+    setNiveau("");
+    setError(null);
+    fetchClasses();
+  }
+
+  function commencerEdition(classe: Classe) {
+    setEditId(classe.id);
+    setEditNom(classe.nom);
+    setEditNiveau(classe.niveau);
+  }
+
+  function annulerEdition() {
+    setEditId(null);
+    setEditNom("");
+    setEditNiveau("");
+  }
+
+  async function enregistrerEdition(id: string) {
+    if (!editNom.trim() || !editNiveau.trim()) {
+      setError("Le nom et le niveau sont obligatoires");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("classes")
+      .update({ nom: editNom, niveau: editNiveau })
+      .eq("id", id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setError(null);
+    annulerEdition();
+    fetchClasses();
+  }
+
+  async function supprimerClasse(id: string) {
+    const confirmation = window.confirm(
+      "Supprimer cette classe ? Les élèves, assignations et notes liés seront aussi supprimés."
+    );
+    if (!confirmation) return;
+
+    const { error } = await supabase.from("classes").delete().eq("id", id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setError(null);
+    fetchClasses();
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-blue-900 mb-6">
-        Gestion des classes
-      </h1>
+    <div className="p-8 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold text-blue-900 mb-6">Classes</h1>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <form
-        onSubmit={gererEnvoi}
-        className="bg-white rounded-xl shadow p-6 mb-8 space-y-4"
+        onSubmit={ajouterClasse}
+        className="mb-8 p-4 border rounded flex gap-4 items-end"
       >
-        <div>
-          <label className="block text-base font-medium text-gray-700 mb-1">
-            Nom de la classe
-          </label>
+        <div className="flex-1">
+          <label className="block text-sm font-medium mb-1">Nom</label>
           <input
-            type="text"
+            className="w-full border rounded px-3 py-2"
+            placeholder="ex: 5ème B"
             value={nom}
             onChange={(e) => setNom(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-
-        {erreur && (
-          <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {erreur}
-          </p>
-        )}
-
+        <div className="flex-1">
+          <label className="block text-sm font-medium mb-1">Niveau</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder="ex: Collège"
+            value={niveau}
+            onChange={(e) => setNiveau(e.target.value)}
+          />
+        </div>
         <button
           type="submit"
-          className="bg-blue-900 hover:bg-blue-800 text-white font-medium px-5 py-2 rounded-lg transition"
+          className="bg-blue-900 text-white px-4 py-2 rounded"
         >
-          Ajouter la classe
+          Ajouter
         </button>
       </form>
 
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">
-        Liste des classes
-      </h2>
-
-      {chargement && <p className="text-gray-500">Chargement...</p>}
-
-      {!chargement && classes.length === 0 && (
-        <p className="text-gray-500">Aucune classe pour le moment.</p>
+      {loading ? (
+        <p>Chargement...</p>
+      ) : (
+        <ul className="space-y-3">
+          {classes.map((classe) => (
+            <li
+              key={classe.id}
+              className="p-4 border rounded flex items-center justify-between"
+            >
+              {editId === classe.id ? (
+                <div className="flex-1 flex gap-3 items-center">
+                  <input
+                    className="border rounded px-2 py-1 flex-1"
+                    value={editNom}
+                    onChange={(e) => setEditNom(e.target.value)}
+                  />
+                  <input
+                    className="border rounded px-2 py-1 flex-1"
+                    value={editNiveau}
+                    onChange={(e) => setEditNiveau(e.target.value)}
+                  />
+                  <button
+                    onClick={() => enregistrerEdition(classe.id)}
+                    className="bg-green-700 text-white px-3 py-1 rounded"
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    onClick={annulerEdition}
+                    className="bg-gray-300 px-3 py-1 rounded"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="font-medium">{classe.nom}</p>
+                    <p className="text-sm text-gray-500">{classe.niveau}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => commencerEdition(classe)}
+                      className="bg-blue-700 text-white px-3 py-1 rounded"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => supprimerClasse(classe.id)}
+                      className="bg-red-700 text-white px-3 py-1 rounded"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
-
-      <ul className="space-y-2">
-        {classes.map((classe) => (
-          <li
-            key={classe.id}
-            className="bg-white rounded-lg shadow-sm px-4 py-3 font-medium"
-          >
-            {classe.nom}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
