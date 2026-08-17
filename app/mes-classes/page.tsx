@@ -2,32 +2,36 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useRole } from "../lib/AuthContext";
+
 interface Professeur {
-  id: string;
+  id: number;
   nom: string;
   prenom: string;
 }
 
 interface Classe {
-  id: string;
+  id: number;
   nom: string;
 }
 
 interface Eleve {
-  id: string;
+  id: number;
   nom: string;
   prenom: string;
 }
 
 interface Note {
-  id: string;
-  eleve_id: string;
+  id: number;
+  eleve_id: number;
   valeur: number;
   appreciation: string;
   created_at: string;
 }
 
 export default function MesClassesPage() {
+  const { isProfesseur } = useRole();
+
   const [professeurs, setProfesseurs] = useState<Professeur[]>([]);
   const [classes, setClasses] = useState<Classe[]>([]);
   const [eleves, setEleves] = useState<Eleve[]>([]);
@@ -37,16 +41,15 @@ export default function MesClassesPage() {
 
   const [error, setError] = useState<string | null>(null);
 
-  // élève dont on gère les notes (formulaire d'ajout ou liste ouverte)
-  const [eleveOuvert, setEleveOuvert] = useState<string | null>(null);
-  const [notesParEleve, setNotesParEleve] = useState<Record<string, Note[]>>({});
+  const [eleveOuvert, setEleveOuvert] = useState<number | null>(null);
+  const [notesParEleve, setNotesParEleve] = useState<Record<number, Note[]>>(
+    {}
+  );
 
-  // formulaire d'ajout de note
   const [nouvelleValeur, setNouvelleValeur] = useState("");
   const [nouvelleAppreciation, setNouvelleAppreciation] = useState("");
 
-  // édition d'une note existante
-  const [editNoteId, setEditNoteId] = useState<string | null>(null);
+  const [editNoteId, setEditNoteId] = useState<number | null>(null);
   const [editValeur, setEditValeur] = useState("");
   const [editAppreciation, setEditAppreciation] = useState("");
 
@@ -81,7 +84,7 @@ export default function MesClassesPage() {
     else setEleves(data ?? []);
   }
 
-  async function fetchNotes(eleveId: string) {
+  async function fetchNotes(eleveId: number) {
     const { data, error } = await supabase
       .from("notes")
       .select("*")
@@ -95,7 +98,7 @@ export default function MesClassesPage() {
     setNotesParEleve((prev) => ({ ...prev, [eleveId]: data ?? [] }));
   }
 
-  function toggleEleve(eleveId: string) {
+  function toggleEleve(eleveId: number) {
     if (eleveOuvert === eleveId) {
       setEleveOuvert(null);
       return;
@@ -107,7 +110,7 @@ export default function MesClassesPage() {
     fetchNotes(eleveId);
   }
 
-  async function ajouterNote(eleveId: string) {
+  async function ajouterNote(eleveId: number) {
     const valeur = parseFloat(nouvelleValeur);
 
     if (Number.isNaN(valeur) || valeur < 0 || valeur > 20) {
@@ -121,8 +124,8 @@ export default function MesClassesPage() {
 
     const { error } = await supabase.from("notes").insert({
       eleve_id: eleveId,
-      professeur_id: professeurId,
-      classe_id: classeId,
+      professeur_id: Number(professeurId),
+      classe_id: Number(classeId),
       valeur,
       appreciation: nouvelleAppreciation,
     });
@@ -150,7 +153,7 @@ export default function MesClassesPage() {
     setEditAppreciation("");
   }
 
-  async function enregistrerEditionNote(eleveId: string, noteId: string) {
+  async function enregistrerEditionNote(eleveId: number, noteId: number) {
     const valeur = parseFloat(editValeur);
 
     if (Number.isNaN(valeur) || valeur < 0 || valeur > 20) {
@@ -177,7 +180,7 @@ export default function MesClassesPage() {
     fetchNotes(eleveId);
   }
 
-  async function supprimerNote(eleveId: string, noteId: string) {
+  async function supprimerNote(eleveId: number, noteId: number) {
     const confirmation = window.confirm("Supprimer cette note ?");
     if (!confirmation) return;
 
@@ -248,49 +251,55 @@ export default function MesClassesPage() {
                     onClick={() => toggleEleve(eleve.id)}
                     className="bg-blue-900 text-white px-3 py-1 rounded"
                   >
-                    {eleveOuvert === eleve.id ? "Fermer" : "Ajouter une note"}
+                    {eleveOuvert === eleve.id
+                      ? "Fermer"
+                      : isProfesseur
+                      ? "Ajouter une note"
+                      : "Voir les notes"}
                   </button>
                 </div>
 
                 {eleveOuvert === eleve.id && (
                   <div className="mt-4 border-t pt-4">
-                    {/* formulaire d'ajout */}
-                    <div className="flex gap-3 items-end mb-4">
-                      <div>
-                        <label className="block text-xs mb-1">
-                          Note / 20
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          max={20}
-                          step={0.25}
-                          className="border rounded px-2 py-1 w-24"
-                          value={nouvelleValeur}
-                          onChange={(e) => setNouvelleValeur(e.target.value)}
-                        />
+                    {isProfesseur && (
+                      <div className="flex gap-3 items-end mb-4">
+                        <div>
+                          <label className="block text-xs mb-1">
+                            Note / 20
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={20}
+                            step={0.25}
+                            className="border rounded px-2 py-1 w-24"
+                            value={nouvelleValeur}
+                            onChange={(e) =>
+                              setNouvelleValeur(e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs mb-1">
+                            Appréciation
+                          </label>
+                          <input
+                            className="border rounded px-2 py-1 w-full"
+                            value={nouvelleAppreciation}
+                            onChange={(e) =>
+                              setNouvelleAppreciation(e.target.value)
+                            }
+                          />
+                        </div>
+                        <button
+                          onClick={() => ajouterNote(eleve.id)}
+                          className="bg-green-700 text-white px-3 py-1 rounded"
+                        >
+                          Ajouter
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <label className="block text-xs mb-1">
-                          Appréciation
-                        </label>
-                        <input
-                          className="border rounded px-2 py-1 w-full"
-                          value={nouvelleAppreciation}
-                          onChange={(e) =>
-                            setNouvelleAppreciation(e.target.value)
-                          }
-                        />
-                      </div>
-                      <button
-                        onClick={() => ajouterNote(eleve.id)}
-                        className="bg-green-700 text-white px-3 py-1 rounded"
-                      >
-                        Ajouter
-                      </button>
-                    </div>
+                    )}
 
-                    {/* liste des notes */}
                     <ul className="space-y-2">
                       {(notesParEleve[eleve.id] ?? []).map((note) => (
                         <li
@@ -340,22 +349,26 @@ export default function MesClassesPage() {
                                 </span>{" "}
                                 — {note.appreciation}
                               </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => commencerEditionNote(note)}
-                                  className="bg-blue-700 text-white px-2 py-1 rounded text-sm"
-                                >
-                                  Modifier
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    supprimerNote(eleve.id, note.id)
-                                  }
-                                  className="bg-red-700 text-white px-2 py-1 rounded text-sm"
-                                >
-                                  Supprimer
-                                </button>
-                              </div>
+                              {isProfesseur && (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() =>
+                                      commencerEditionNote(note)
+                                    }
+                                    className="bg-blue-700 text-white px-2 py-1 rounded text-sm"
+                                  >
+                                    Modifier
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      supprimerNote(eleve.id, note.id)
+                                    }
+                                    className="bg-red-700 text-white px-2 py-1 rounded text-sm"
+                                  >
+                                    Supprimer
+                                  </button>
+                                </div>
+                              )}
                             </>
                           )}
                         </li>

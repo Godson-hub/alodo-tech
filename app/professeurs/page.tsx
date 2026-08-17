@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useRole } from "../lib/AuthContext";
+
 interface Professeur {
   id: number;
   nom: string;
@@ -10,16 +12,16 @@ interface Professeur {
 }
 
 export default function ProfesseursPage() {
+  const { isProfesseur } = useRole();
+
   const [professeurs, setProfesseurs] = useState<Professeur[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // formulaire de création
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [matiere, setMatiere] = useState("");
 
-  // édition en cours
   const [editId, setEditId] = useState<number | null>(null);
   const [editNom, setEditNom] = useState("");
   const [editPrenom, setEditPrenom] = useState("");
@@ -129,41 +131,43 @@ export default function ProfesseursPage() {
         </div>
       )}
 
-      <form
-        onSubmit={ajouterProfesseur}
-        className="mb-8 p-4 border rounded flex gap-4 items-end flex-wrap"
-      >
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Nom</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Prénom</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={prenom}
-            onChange={(e) => setPrenom(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Matière</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={matiere}
-            onChange={(e) => setMatiere(e.target.value)}
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-900 text-white px-4 py-2 rounded"
+      {isProfesseur && (
+        <form
+          onSubmit={ajouterProfesseur}
+          className="mb-8 p-4 border rounded flex gap-4 items-end flex-wrap"
         >
-          Ajouter
-        </button>
-      </form>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Nom</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Prénom</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Matière</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={matiere}
+              onChange={(e) => setMatiere(e.target.value)}
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-900 text-white px-4 py-2 rounded"
+          >
+            Ajouter
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <p>Chargement...</p>
@@ -212,20 +216,22 @@ export default function ProfesseursPage() {
                     </p>
                     <p className="text-sm text-gray-500">{prof.matiere}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => commencerEdition(prof)}
-                      className="bg-blue-700 text-white px-3 py-1 rounded"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => supprimerProfesseur(prof.id)}
-                      className="bg-red-700 text-white px-3 py-1 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
+                  {isProfesseur && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => commencerEdition(prof)}
+                        className="bg-blue-700 text-white px-3 py-1 rounded"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => supprimerProfesseur(prof.id)}
+                        className="bg-red-700 text-white px-3 py-1 rounded"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </li>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
-import { AuthProvider } from "@/lib/AuthContext";
+import { AuthProvider } from "./lib/AuthContext";
 
 export const metadata: Metadata = {
   title: "Alodo Tech - Gestion scolaire",

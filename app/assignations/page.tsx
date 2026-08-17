@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useRole } from "../lib/AuthContext";
 
 interface Professeur {
   id: number;
@@ -21,13 +22,14 @@ interface Assignation {
 }
 
 export default function AssignationsPage() {
+  const { isProfesseur } = useRole();
+
   const [professeurs, setProfesseurs] = useState<Professeur[]>([]);
   const [classes, setClasses] = useState<Classe[]>([]);
   const [assignations, setAssignations] = useState<Assignation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // formulaire de création
   const [professeurId, setProfesseurId] = useState("");
   const [classeId, setClasseId] = useState("");
 
@@ -71,7 +73,6 @@ export default function AssignationsPage() {
       return;
     }
 
-    // évite les doublons (même prof déjà assigné à cette classe)
     const doublon = assignations.some(
       (a) =>
         a.professeur_id === Number(professeurId) &&
@@ -126,49 +127,51 @@ export default function AssignationsPage() {
         </div>
       )}
 
-      <form
-        onSubmit={ajouterAssignation}
-        className="mb-8 p-4 border rounded flex gap-4 items-end flex-wrap"
-      >
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">
-            Professeur
-          </label>
-          <select
-            className="w-full border rounded px-3 py-2"
-            value={professeurId}
-            onChange={(e) => setProfesseurId(e.target.value)}
-          >
-            <option value="">-- Sélectionner --</option>
-            {professeurs.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.prenom} {p.nom}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Classe</label>
-          <select
-            className="w-full border rounded px-3 py-2"
-            value={classeId}
-            onChange={(e) => setClasseId(e.target.value)}
-          >
-            <option value="">-- Sélectionner --</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nom}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-900 text-white px-4 py-2 rounded"
+      {isProfesseur && (
+        <form
+          onSubmit={ajouterAssignation}
+          className="mb-8 p-4 border rounded flex gap-4 items-end flex-wrap"
         >
-          Assigner
-        </button>
-      </form>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">
+              Professeur
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={professeurId}
+              onChange={(e) => setProfesseurId(e.target.value)}
+            >
+              <option value="">-- Sélectionner --</option>
+              {professeurs.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.prenom} {p.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Classe</label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={classeId}
+              onChange={(e) => setClasseId(e.target.value)}
+            >
+              <option value="">-- Sélectionner --</option>
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-900 text-white px-4 py-2 rounded"
+          >
+            Assigner
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <p>Chargement...</p>
@@ -185,12 +188,14 @@ export default function AssignationsPage() {
                 </span>{" "}
                 — {nomClasse(a.classe_id)}
               </p>
-              <button
-                onClick={() => supprimerAssignation(a.id)}
-                className="bg-red-700 text-white px-3 py-1 rounded"
-              >
-                Retirer
-              </button>
+              {isProfesseur && (
+                <button
+                  onClick={() => supprimerAssignation(a.id)}
+                  className="bg-red-700 text-white px-3 py-1 rounded"
+                >
+                  Retirer
+                </button>
+              )}
             </li>
           ))}
           {assignations.length === 0 && (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useRole } from "../lib/AuthContext";
 
 interface Classe {
   id: number;
@@ -16,17 +17,17 @@ interface Eleve {
 }
 
 export default function ElevesPage() {
+  const { isProfesseur } = useRole();
+
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [classes, setClasses] = useState<Classe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // formulaire de création
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [classeId, setClasseId] = useState<string>("");
 
-  // édition en cours
   const [editId, setEditId] = useState<number | null>(null);
   const [editNom, setEditNom] = useState("");
   const [editPrenom, setEditPrenom] = useState("");
@@ -148,48 +149,50 @@ export default function ElevesPage() {
         </div>
       )}
 
-      <form
-        onSubmit={ajouterEleve}
-        className="mb-8 p-4 border rounded flex gap-4 items-end flex-wrap"
-      >
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Nom</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Prénom</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={prenom}
-            onChange={(e) => setPrenom(e.target.value)}
-          />
-        </div>
-        <div className="flex-1 min-w-[150px]">
-          <label className="block text-sm font-medium mb-1">Classe</label>
-          <select
-            className="w-full border rounded px-3 py-2"
-            value={classeId}
-            onChange={(e) => setClasseId(e.target.value)}
-          >
-            <option value="">-- Sélectionner --</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nom}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-900 text-white px-4 py-2 rounded"
+      {isProfesseur && (
+        <form
+          onSubmit={ajouterEleve}
+          className="mb-8 p-4 border rounded flex gap-4 items-end flex-wrap"
         >
-          Ajouter
-        </button>
-      </form>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Nom</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Prénom</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium mb-1">Classe</label>
+            <select
+              className="w-full border rounded px-3 py-2"
+              value={classeId}
+              onChange={(e) => setClasseId(e.target.value)}
+            >
+              <option value="">-- Sélectionner --</option>
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-900 text-white px-4 py-2 rounded"
+          >
+            Ajouter
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <p>Chargement...</p>
@@ -246,20 +249,22 @@ export default function ElevesPage() {
                       {nomClasse(eleve.classe_id)}
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => commencerEdition(eleve)}
-                      className="bg-blue-700 text-white px-3 py-1 rounded"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => supprimerEleve(eleve.id)}
-                      className="bg-red-700 text-white px-3 py-1 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
+                  {isProfesseur && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => commencerEdition(eleve)}
+                        className="bg-blue-700 text-white px-3 py-1 rounded"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => supprimerEleve(eleve.id)}
+                        className="bg-red-700 text-white px-3 py-1 rounded"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </li>

@@ -2,24 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useRole } from "../lib/AuthContext";
 
 interface Classe {
-  id: string;
+  id: number;
   nom: string;
   niveau: string;
 }
 
 export default function ClassesPage() {
+  const { isProfesseur } = useRole();
+
   const [classes, setClasses] = useState<Classe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // formulaire de création
   const [nom, setNom] = useState("");
   const [niveau, setNiveau] = useState("");
 
-  // édition en cours
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [editNom, setEditNom] = useState("");
   const [editNiveau, setEditNiveau] = useState("");
 
@@ -71,7 +72,7 @@ export default function ClassesPage() {
     setEditNiveau("");
   }
 
-  async function enregistrerEdition(id: string) {
+  async function enregistrerEdition(id: number) {
     if (!editNom.trim() || !editNiveau.trim()) {
       setError("Le nom et le niveau sont obligatoires");
       return;
@@ -92,7 +93,7 @@ export default function ClassesPage() {
     fetchClasses();
   }
 
-  async function supprimerClasse(id: string) {
+  async function supprimerClasse(id: number) {
     const confirmation = window.confirm(
       "Supprimer cette classe ? Les élèves, assignations et notes liés seront aussi supprimés."
     );
@@ -119,35 +120,37 @@ export default function ClassesPage() {
         </div>
       )}
 
-      <form
-        onSubmit={ajouterClasse}
-        className="mb-8 p-4 border rounded flex gap-4 items-end"
-      >
-        <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Nom</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            placeholder="ex: 5ème B"
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-          />
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Niveau</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            placeholder="ex: Collège"
-            value={niveau}
-            onChange={(e) => setNiveau(e.target.value)}
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-900 text-white px-4 py-2 rounded"
+      {isProfesseur && (
+        <form
+          onSubmit={ajouterClasse}
+          className="mb-8 p-4 border rounded flex gap-4 items-end"
         >
-          Ajouter
-        </button>
-      </form>
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-1">Nom</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              placeholder="ex: 5ème B"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-1">Niveau</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              placeholder="ex: Collège"
+              value={niveau}
+              onChange={(e) => setNiveau(e.target.value)}
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-900 text-white px-4 py-2 rounded"
+          >
+            Ajouter
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <p>Chargement...</p>
@@ -189,20 +192,22 @@ export default function ClassesPage() {
                     <p className="font-medium">{classe.nom}</p>
                     <p className="text-sm text-gray-500">{classe.niveau}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => commencerEdition(classe)}
-                      className="bg-blue-700 text-white px-3 py-1 rounded"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => supprimerClasse(classe.id)}
-                      className="bg-red-700 text-white px-3 py-1 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
+                  {isProfesseur && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => commencerEdition(classe)}
+                        className="bg-blue-700 text-white px-3 py-1 rounded"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => supprimerClasse(classe.id)}
+                        className="bg-red-700 text-white px-3 py-1 rounded"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </li>
