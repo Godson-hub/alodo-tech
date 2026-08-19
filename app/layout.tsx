@@ -4,7 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "./lib/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Alodo Tech - Gestion scolaire",
+  title: "Scolario - Gestion scolaire",
   description: "Plateforme de gestion scolaire",
 };
 
@@ -19,7 +19,7 @@ export default function RootLayout({
         <AuthProvider>
           <nav className="bg-blue-900 text-white shadow-md">
             <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-4">
-              <span className="font-bold text-lg mr-4">🎓 Alodo Tech</span>
+              <span className="font-bold text-lg mr-4">🎓 Scolario</span>
               <Link href="/professeurs" className="hover:text-blue-200 transition">
                 Professeurs
               </Link>
