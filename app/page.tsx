@@ -69,7 +69,7 @@ export default function Home() {
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold text-blue-900 mb-2">
-          🎓 Bienvenue sur Alodo Tech
+          🎓 Bienvenue sur Scolario
         </h1>
         <p className="text-gray-500">
           Plateforme de gestion scolaire — professeurs, classes, élèves et

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +43,7 @@ export default function LoginPage() {
         className="bg-white p-8 rounded shadow-md w-full max-w-sm"
       >
         <h1 className="text-2xl font-bold text-blue-900 mb-6 text-center">
-          Alodo Tech — Connexion
+          Scolario — Connexion
         </h1>
 
         {error && (
