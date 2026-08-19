@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "../lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 type Role = "professeur" | "eleve" | null;
 
@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -61,6 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  // Surveille TOUTES les pages : si la personne n'est pas connectée
+  // et qu'elle n'est pas déjà sur la page de connexion, on l'y envoie.
+  useEffect(() => {
+    if (!loading && !userId && pathname !== "/login") {
+      router.push("/login");
+    }
+  }, [loading, userId, pathname, router]);
 
   async function fetchRole(id: string) {
     const { data, error } = await supabase
