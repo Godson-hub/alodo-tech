@@ -1,10 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "./lib/supabase";
+import { useRole } from "./lib/AuthContext";
 
 export default function Home() {
+  const { userId, loading: authLoading } = useRole();
+  const router = useRouter();
+
   const [stats, setStats] = useState({
     professeurs: 0,
     classes: 0,
@@ -12,6 +17,12 @@ export default function Home() {
     notes: 0,
   });
   const [chargement, setChargement] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && !userId) {
+      router.push("/login");
+    }
+  }, [authLoading, userId, router]);
 
   useEffect(() => {
     async function chargerStats() {
@@ -31,8 +42,10 @@ export default function Home() {
       setChargement(false);
     }
 
-    chargerStats();
-  }, []);
+    if (userId) {
+      chargerStats();
+    }
+  }, [userId]);
 
   const cartes = [
     {
@@ -64,6 +77,16 @@ export default function Home() {
       icone: "📝",
     },
   ];
+
+  // Tant qu'on ne sait pas encore si la personne est connectée,
+  // ou si elle n'est pas connectée (redirection en cours), on n'affiche rien.
+  if (authLoading || !userId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-400">Chargement...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
