@@ -1,6 +1,23 @@
 html {
-  color-scheme: light;
+  color-scheme: light only;
 }
+
+input,
+textarea,
+select {
+  background-color: white !important;
+  color: #111827 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+label {
+  color: #111827 !important;
+}
+
 
 @import "tailwindcss";
 

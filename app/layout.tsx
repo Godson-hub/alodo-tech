@@ -15,6 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+  <meta name="color-scheme" content="light" />
+</head>
       <body className="bg-gray-50 text-gray-900">
         <AuthProvider>
           <nav className="bg-blue-900 text-white shadow-md">
