@@ -101,6 +101,7 @@ export default function LoginPage() {
           type="button"
           onClick={handleGoogleLogin}
           className="w-full border border-gray-300 py-2 rounded flex items-center justify-center gap-2 hover:bg-gray-50 text-gray-900"
+          style={{ color: "111827" }}
         >
           <svg width="18" height="18" viewBox="0 0 48 48">
             <path
@@ -120,7 +121,8 @@ export default function LoginPage() {
               d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.2 5.3C40.9 35.9 44 30.5 44 24c0-1.4-.1-2.4-.4-3.5z"
             />
           </svg>
-          Se connecter avec Google
+          <span style={{ color: "#111827" }}>Se connecter avec Google</span>
+
         </button>
       </form>
     </div>
